@@ -4,7 +4,8 @@
 
   // Default settings
   var BPM = 120;
-  var TICKS = 16;
+  var TICKS = 6; // Changed to 6 for 6x6 grid
+  var GRID_ROWS = 6; // 6 rows for the grid
   var soundPrefix = 'https://blog.omgmog.net/beatmaker/sounds/';
   var sounds = [
     'bass_drum.wav',
@@ -69,6 +70,17 @@
   };
   var clipboardSection = null;
   var notificationTimeout = null;
+
+  // Sound mapping for 6x6 grid - each cell can have a sound assigned
+  var gridSoundMapping = {};
+  // Initialize default sound mapping (row 0 = bass, row 1 = snare, etc.)
+  for (var r = 0; r < GRID_ROWS; r++) {
+    for (var c = 0; c < TICKS; c++) {
+      var cellKey = r + '_' + c;
+      gridSoundMapping[cellKey] = r % sounds.length; // Default: use row index modulo number of sounds
+    }
+  }
+
   var audioEffects = {
     delay: {
       active: false,
@@ -124,9 +136,9 @@
   // Mobile variables
   var isMobile = false;
   var currentPage = 0;
-  var pagesPerRow = 2; // For mobile view, we'll show 8 columns at a time (TICKS/pagesPerRow)
+  var pagesPerRow = 2; // For mobile view, we'll show 3 columns at a time (TICKS/pagesPerRow)
   var visibleInstrument = 0; // For mobile view, track which instrument is visible
-  var gridRowCount = sounds.length;
+  var gridRowCount = GRID_ROWS;
   
   // Check if device is touch-enabled or small screen
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 768) {
@@ -593,15 +605,21 @@
     activeKeys.delete(midiNote);
   }
   
-  // Function to play sound with effects
-  var playSound = function (index) {
+  // Function to play sound with effects (updated for grid sound mapping)
+  var playSound = function (index, row, col) {
     if (!isPlaying) return;
-    
+
+    // Get the sound index from grid mapping if row and col are provided
+    if (typeof row !== 'undefined' && typeof col !== 'undefined') {
+      var cellKey = row + '_' + col;
+      index = gridSoundMapping[cellKey] || index;
+    }
+
     // Check if it's a custom sound
     if (index >= sounds.length - 2) {
       var customIndex = index - (sounds.length - 2);
       var customKey = customIndex === 0 ? 'custom1' : 'custom2';
-      
+
       if (customSounds[customKey]) {
         // Play the custom sound
         if (!AudioContext) {
@@ -610,7 +628,7 @@
           audio.play();
           return;
         }
-        
+
         // Using the AudioContext API
         var reader = new FileReader();
         reader.onload = function(e) {
@@ -619,14 +637,14 @@
           });
         };
         reader.readAsArrayBuffer(customSounds[customKey]);
-        
+
         return;
       }
-      
+
       // No custom sound loaded, don't play anything
       return;
     }
-    
+
     var url = soundPrefix + sounds[index];
 
     if (!AudioContext) {
@@ -679,29 +697,29 @@
     }
   };
   
-  // Function to create grid based on current section
+  // Function to create grid based on current section (updated for 6x6)
   var createGrid = function() {
     if (!$grid) return;
-    
+
     $grid.innerHTML = '';
-    
+
     var columnsToShow = isMobile ? TICKS / pagesPerRow : TICKS;
     var startColumn = isMobile ? currentPage * (TICKS / pagesPerRow) : 0;
     var endColumn = isMobile ? startColumn + columnsToShow : TICKS;
-    
-    // Determine visible rows based on mobile mode
+
+    // Use GRID_ROWS instead of sounds.length
     var startRow = isMobile ? visibleInstrument : 0;
-    var endRow = isMobile ? visibleInstrument + 1 : sounds.length;
-    
+    var endRow = isMobile ? visibleInstrument + 1 : GRID_ROWS;
+
     // Set grid template based on layout
     if (isMobile) {
       $grid.style.gridTemplateColumns = `repeat(${columnsToShow}, 1fr)`;
       $grid.style.gridTemplateRows = `repeat(1, 1fr)`;
     } else {
       $grid.style.gridTemplateColumns = `repeat(${TICKS}, 1fr)`;
-      $grid.style.gridTemplateRows = `repeat(${sounds.length}, 30px)`;
+      $grid.style.gridTemplateRows = `repeat(${GRID_ROWS}, 1fr)`;
     }
-    
+
     // Create buttons for the grid
     var $button = document.createElement('button');
     $button.classList.add('beat');
@@ -712,13 +730,18 @@
         if (c === 0) {
           _$button.classList.add('first');
         }
-        // add a class based on the instrument
-        var soundname = sounds[r].split('.')[0];
+
+        // Get the sound mapped to this cell
+        var cellKey = r + '_' + c;
+        var soundIndex = gridSoundMapping[cellKey] || 0;
+        var soundname = sounds[soundIndex].split('.')[0];
+
         _$button.classList.add(soundname);
         _$button.dataset.instrument = soundname;
         _$button.dataset.row = r;
         _$button.dataset.col = c;
-        _$button.setAttribute('aria-label', `${instrumentNames[r]} beat ${c+1}`);
+        _$button.dataset.soundIndex = soundIndex;
+        _$button.setAttribute('aria-label', `Row ${r+1} Col ${c+1} - ${instrumentNames[soundIndex]}`);
 
         // If this beat is active in the current section
         if (sections[currentSection][r] && sections[currentSection][r][c]) {
@@ -727,29 +750,51 @@
 
         _$button.addEventListener('click', function() {
           this.classList.toggle('on');
-          
+
           // Update the section data
           var row = parseInt(this.dataset.row);
           var col = parseInt(this.dataset.col);
-          
+
           if (!sections[currentSection][row]) {
             sections[currentSection][row] = {};
           }
-          
+
           sections[currentSection][row][col] = this.classList.contains('on');
-          
+
           // Add glitch effect
           addGlitchEffect(this);
         });
-        
+
+        // Right-click to change sound mapping
+        _$button.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+          var row = parseInt(this.dataset.row);
+          var col = parseInt(this.dataset.col);
+          var cellKey = row + '_' + col;
+          var currentSound = gridSoundMapping[cellKey] || 0;
+
+          // Cycle to next sound
+          var nextSound = (currentSound + 1) % sounds.length;
+          gridSoundMapping[cellKey] = nextSound;
+
+          // Update button appearance
+          var soundname = sounds[nextSound].split('.')[0];
+          this.dataset.soundIndex = nextSound;
+          this.dataset.instrument = soundname;
+          this.setAttribute('aria-label', `Row ${row+1} Col ${col+1} - ${instrumentNames[nextSound]}`);
+
+          showNotification(`Cell [${row+1},${col+1}] mapped to ${instrumentNames[nextSound]}`);
+          addGlitchEffect(this);
+        });
+
         $grid.appendChild(_$button);
       }
     }
-    
+
     // Update mobile pagination if needed
     if (isMobile) {
       updateMobilePagination();
-      
+
       // Update active instrument indicator
       $instrumentLabels.forEach((label, index) => {
         if (index === visibleInstrument) {
@@ -758,13 +803,13 @@
           label.classList.remove('active');
         }
       });
-      
+
       // Update mobile dropdown
       if ($mobileInstrumentDropdown) {
         $mobileInstrumentDropdown.value = visibleInstrument;
       }
     }
-    
+
     // Add glitch effect to grid
     addGlitchEffect($grid);
   };
@@ -986,11 +1031,11 @@
     addGlitchEffect(this);
   });
 
-  // Generate random pattern
+  // Generate random pattern (updated for 6x6 grid)
   var setRandomBeat = function() {
     clearBeat();
 
-    for (var r = 0; r < sounds.length; r++) {
+    for (var r = 0; r < GRID_ROWS; r++) {
       for (var c = 0; c < TICKS; c++) {
         var num = Math.ceil(Math.random() * 100) % 3;
         if (num === 0) {
@@ -1149,61 +1194,65 @@
   
   function startSequencer() {
     var tickTime = 60000 / (BPM * 4); // Calculate time per tick based on BPM
-    
+
     interval = requestInterval(function() {
       // Get all current beat buttons
       var $beats = document.querySelectorAll('.beat');
       var visibleBeats = Array.from($beats);
-      
+
       // Clear previous ticked state from all beats in the document
       document.querySelectorAll('.beat.ticked').forEach(function(beat) {
         beat.classList.remove('ticked');
       });
-      
+
       // Calculate which beat should be ticked in the current view
       var tickPosition = currentTick;
-      
+
       // On mobile, adjust for pagination
       if (isMobile) {
         var pageStart = currentPage * (TICKS / pagesPerRow);
         var pageEnd = pageStart + (TICKS / pagesPerRow);
-        
+
         // Only process if the current tick is within the visible range
         if (currentTick >= pageStart && currentTick < pageEnd) {
           tickPosition = currentTick - pageStart;
-          
+
           // Find the beat at this position for the current instrument
           var beatIndex = tickPosition;
           if (beatIndex < visibleBeats.length) {
             var currentBeat = visibleBeats[beatIndex];
             currentBeat.classList.add('ticked');
-            
+
             // Play sound if the beat is on
             if (currentBeat.classList.contains('on')) {
-              playSound(visibleInstrument);
+              var row = parseInt(currentBeat.dataset.row);
+              var col = parseInt(currentBeat.dataset.col);
+              playSound(null, row, col);
             }
           }
         }
       } else {
-        // Desktop view - handle all instruments
-        for (var i = 0; i < sounds.length; i++) {
+        // Desktop view - handle all rows in 6x6 grid
+        for (var i = 0; i < GRID_ROWS; i++) {
           var instrumentBeats = visibleBeats.filter(beat => parseInt(beat.dataset.row) === i);
-          
+
           if (instrumentBeats.length > 0) {
-            // Find beats for current instrument at current tick
+            // Find beats for current row at current tick
             var currentBeat = instrumentBeats.find(beat => parseInt(beat.dataset.col) === currentTick);
-            
+
             if (currentBeat) {
               currentBeat.classList.add('ticked');
-              
+
               if (currentBeat.classList.contains('on')) {
-                playSound(i);
+                var row = parseInt(currentBeat.dataset.row);
+                var col = parseInt(currentBeat.dataset.col);
+                playSound(null, row, col);
               }
             }
           }
         }
       }
-      
+
       // Advance tick counter
       lastTick = currentTick;
       currentTick = (currentTick + 1) % TICKS;
