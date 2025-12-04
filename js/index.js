@@ -29,24 +29,24 @@
   
   // Human-readable names for the instruments
   var instrumentNames = [
-    'BASS DRUM',
-    'SNARE DRUM',
-    'LOW TOM',
-    'MID TOM',
-    'HI TOM',
-    'RIM SHOT',
-    'HAND CLAP',
-    'COWBELL',
-    'CYMBAL',
-    'OPEN HI-HAT',
-    'CLOSED HI-HAT',
-    'LOW CONGA',
-    'MID CONGA',
-    'HI CONGA',
-    'CLAVES',
-    'MARACAS',
-    'CUSTOM 1',
-    'CUSTOM 2'
+    'Bass Drum',
+    'Snare Drum',
+    'Low Tom',
+    'Mid Tom',
+    'Hi Tom',
+    'Rim Shot',
+    'Hand Clap',
+    'Cowbell',
+    'Cymbal',
+    'Open Hi-Hat',
+    'Closed Hi-Hat',
+    'Low Conga',
+    'Mid Conga',
+    'Hi Conga',
+    'Claves',
+    'Maracas',
+    'Custom 1',
+    'Custom 2'
   ];
   
   var buffers = {};
@@ -223,24 +223,23 @@
   function updatePlaybackStatus() {
     if (isPlaying) {
       if ($playbackStatus) {
-        $playbackStatus.textContent = 'PLAYBACK ACTIVE';
+        $playbackStatus.textContent = 'Playing';
         $playbackStatus.classList.add('playing');
       }
       if ($mobilePlaybackStatus) {
-        $mobilePlaybackStatus.textContent = 'PLAYING';
-        $mobilePlaybackStatus.style.color = 'var(--primary)';
+        $mobilePlaybackStatus.textContent = 'Playing';
+        $mobilePlaybackStatus.style.color = 'var(--success)';
       }
     } else {
       if ($playbackStatus) {
-        $playbackStatus.textContent = 'PLAYBACK PAUSED';
+        $playbackStatus.textContent = 'Paused';
         $playbackStatus.classList.remove('playing');
       }
       if ($mobilePlaybackStatus) {
-        $mobilePlaybackStatus.textContent = 'PAUSED';
-        $mobilePlaybackStatus.style.color = 'var(--secondary)';
+        $mobilePlaybackStatus.textContent = 'Paused';
+        $mobilePlaybackStatus.style.color = 'var(--text-secondary)';
       }
     }
-    if ($playbackStatus) addGlitchEffect($playbackStatus);
   }
   
   // Initialize mobile instrument dropdown
@@ -799,7 +798,7 @@
     }
     
     // Show notification
-    showNotification(`SECTION SWITCHED TO: ${sectionName.toUpperCase()}`);
+    showNotification(`Switched to ${sectionName} section`);
   };
   
   // Function to show notification
@@ -888,21 +887,21 @@
   if ($copySection) {
     $copySection.addEventListener('click', function() {
       clipboardSection = JSON.parse(JSON.stringify(sections[currentSection]));
-      showNotification('SECTION COPIED: ' + currentSection.toUpperCase());
+      showNotification(`Copied ${currentSection} section`);
       addGlitchEffect(this);
     });
   }
-  
+
   if ($pasteSection) {
     $pasteSection.addEventListener('click', function() {
       if (!clipboardSection) {
-        showNotification('NO SECTION COPIED YET');
+        showNotification('No section copied yet');
         return;
       }
-      
+
       sections[currentSection] = JSON.parse(JSON.stringify(clipboardSection));
       createGrid();
-      showNotification('PATTERN PASTED TO: ' + currentSection.toUpperCase());
+      showNotification(`Pasted to ${currentSection} section`);
       addGlitchEffect(this);
     });
   }
@@ -910,9 +909,9 @@
   // Play sequence functionality
   if ($playSequence) {
     $playSequence.addEventListener('click', function() {
-      showNotification('SEQUENCE PLAYBACK COMING SOON');
+      showNotification('Sequence playback coming soon');
       addGlitchEffect(this);
-      
+
       // Add scanning effect to timeline
       var timeline = document.querySelector('.timeline-container');
       if (timeline) {
@@ -923,39 +922,39 @@
       }
     });
   }
-  
+
   // Custom sound upload functionality
   if ($customSound1) {
     $customSound1.addEventListener('change', function(event) {
       var file = event.target.files[0];
       if (file) {
         customSounds.custom1 = file;
-        
+
         // Update the label
         var label = this.parentNode.querySelector('span');
         if (label) {
           label.textContent = file.name.length > 10 ? file.name.substring(0, 8) + '...' : file.name;
         }
-        
-        showNotification('CUSTOM SOUND 1 LOADED: ' + file.name);
+
+        showNotification(`Loaded ${file.name} to Custom 1`);
         addGlitchEffect(this.parentNode);
       }
     });
   }
-  
+
   if ($customSound2) {
     $customSound2.addEventListener('change', function(event) {
       var file = event.target.files[0];
       if (file) {
         customSounds.custom2 = file;
-        
+
         // Update the label
         var label = this.parentNode.querySelector('span');
         if (label) {
           label.textContent = file.name.length > 10 ? file.name.substring(0, 8) + '...' : file.name;
         }
-        
-        showNotification('CUSTOM SOUND 2 LOADED: ' + file.name);
+
+        showNotification(`Loaded ${file.name} to Custom 2`);
         addGlitchEffect(this.parentNode);
       }
     });
@@ -978,10 +977,10 @@
       }
     }
     
-    showNotification('PATTERN CLEARED');
+    showNotification('Pattern cleared');
     addGlitchEffect($grid);
   };
-  
+
   document.querySelector('#clear').addEventListener('click', function() {
     clearBeat();
     addGlitchEffect(this);
@@ -990,7 +989,7 @@
   // Generate random pattern
   var setRandomBeat = function() {
     clearBeat();
-    
+
     for (var r = 0; r < sounds.length; r++) {
       for (var c = 0; c < TICKS; c++) {
         var num = Math.ceil(Math.random() * 100) % 3;
@@ -1003,14 +1002,14 @@
         }
       }
     }
-    
+
     // Update grid display after setting data
     createGrid();
-    
-    showNotification('RANDOM PATTERN GENERATED');
+
+    showNotification('Random pattern generated');
     addGlitchEffect($grid);
   };
-  
+
   document.querySelector('#random').addEventListener('click', function() {
     setRandomBeat();
     addGlitchEffect(this);
@@ -1056,8 +1055,8 @@
       // Trigger download
       download_link.click();
     }
-    
-    showNotification('PATTERN EXPORTED');
+
+    showNotification('Pattern exported');
   };
   
   document.querySelector('#export').addEventListener('click', function() {
@@ -1113,14 +1112,14 @@
           context.resume();
         }
         startSequencer();
-        showNotification('PLAYBACK STARTED');
+        showNotification('Playback started');
       } else {
         this.innerHTML = '<span class="play-icon">▶</span>';
         this.setAttribute('aria-label', 'Play');
         if (interval) {
           cancelAnimationFrame(interval.value);
         }
-        showNotification('PLAYBACK PAUSED');
+        showNotification('Playback paused');
       }
       
       // Update playback status in header
@@ -1253,13 +1252,13 @@
     if ($delayActive) {
       $delayActive.addEventListener('change', function() {
         audioEffects.delay.active = this.checked;
-        
+
         if (this.checked) {
-          showNotification('DELAY EFFECT ACTIVATED');
+          showNotification('Delay effect enabled');
         } else {
-          showNotification('DELAY EFFECT DEACTIVATED');
+          showNotification('Delay effect disabled');
         }
-        
+
         // Add glitch effect
         addGlitchEffect(this.parentNode);
       });
@@ -1298,95 +1297,95 @@
     if ($reverbActive) {
       $reverbActive.addEventListener('change', function() {
         audioEffects.reverb.active = this.checked;
-        
+
         if (this.checked) {
-          showNotification('REVERB EFFECT ACTIVATED');
+          showNotification('Reverb effect enabled');
         } else {
-          showNotification('REVERB EFFECT DEACTIVATED');
+          showNotification('Reverb effect disabled');
         }
-        
+
         // Add glitch effect
         addGlitchEffect(this.parentNode);
       });
     }
-    
+
     // Filter
     if ($filterCutoff) {
       $filterCutoff.addEventListener('input', function() {
         var value = parseInt(this.value);
-        
+
         if (audioEffects.filter.node) {
           audioEffects.filter.node.frequency.value = value;
         }
-        
+
         audioEffects.filter.cutoff = value;
         if ($filterCutoffValue) $filterCutoffValue.textContent = value + ' Hz';
       });
     }
-    
+
     if ($filterQ) {
       $filterQ.addEventListener('input', function() {
         var value = parseInt(this.value) / 10; // 0-10
-        
+
         if (audioEffects.filter.node) {
           audioEffects.filter.node.Q.value = value;
         }
-        
+
         audioEffects.filter.q = parseInt(this.value);
         if ($filterQValue) $filterQValue.textContent = value.toFixed(1);
       });
     }
-    
+
     if ($filterActive) {
       $filterActive.addEventListener('change', function() {
         audioEffects.filter.active = this.checked;
-        
+
         if (this.checked) {
-          showNotification('FILTER EFFECT ACTIVATED');
+          showNotification('Filter effect enabled');
         } else {
-          showNotification('FILTER EFFECT DEACTIVATED');
+          showNotification('Filter effect disabled');
         }
-        
+
         // Add glitch effect
         addGlitchEffect(this.parentNode);
       });
     }
-    
+
     // Compressor
     if ($compThreshold) {
       $compThreshold.addEventListener('input', function() {
         var value = parseInt(this.value);
-        
+
         if (audioEffects.compressor.node) {
           audioEffects.compressor.node.threshold.value = value;
         }
-        
+
         audioEffects.compressor.threshold = value;
         if ($compThresholdValue) $compThresholdValue.textContent = value + ' dB';
       });
     }
-    
+
     if ($compRatio) {
       $compRatio.addEventListener('input', function() {
         var value = parseInt(this.value);
-        
+
         if (audioEffects.compressor.node) {
           audioEffects.compressor.node.ratio.value = value;
         }
-        
+
         audioEffects.compressor.ratio = value;
         if ($compRatioValue) $compRatioValue.textContent = value + ':1';
       });
     }
-    
+
     if ($compActive) {
       $compActive.addEventListener('change', function() {
         audioEffects.compressor.active = this.checked;
-        
+
         if (this.checked) {
-          showNotification('COMPRESSOR EFFECT ACTIVATED');
+          showNotification('Compression effect enabled');
         } else {
-          showNotification('COMPRESSOR EFFECT DEACTIVATED');
+          showNotification('Compression effect disabled');
         }
         
         // Add glitch effect
@@ -1403,30 +1402,30 @@
         if (currentOctave > 1) {
           currentOctave--;
           updateKeyboardOctave();
-          showNotification('OCTAVE: ' + currentOctave);
+          showNotification(`Octave ${currentOctave}`);
           addGlitchEffect(this);
         }
       });
     }
-    
+
     if ($octaveUp) {
       $octaveUp.addEventListener('click', function() {
         if (currentOctave < 7) {
           currentOctave++;
           updateKeyboardOctave();
-          showNotification('OCTAVE: ' + currentOctave);
+          showNotification(`Octave ${currentOctave}`);
           addGlitchEffect(this);
         }
       });
     }
-    
+
     // Hold mode
     if ($keyboardHold) {
       $keyboardHold.addEventListener('change', function() {
         keyboardHold = this.checked;
-        
+
         if (this.checked) {
-          showNotification('KEYBOARD HOLD: ON');
+          showNotification('Hold mode enabled');
         } else {
           // Release all held notes
           activeKeys.forEach(midiNote => {
@@ -1436,16 +1435,17 @@
               keyElement.classList.remove('active');
             }
           });
-          showNotification('KEYBOARD HOLD: OFF');
+          showNotification('Hold mode disabled');
         }
       });
     }
-    
+
     // Preset selection
     if ($keyboardPreset) {
       $keyboardPreset.addEventListener('change', function() {
         currentPreset = this.value;
-        showNotification('SOUND PRESET: ' + currentPreset.toUpperCase());
+        var presetName = this.options[this.selectedIndex].text;
+        showNotification(`Sound: ${presetName}`);
         addGlitchEffect(this);
       });
     }
@@ -1562,9 +1562,9 @@
       
       // Recreate grid for the new orientation
       createGrid();
-      
+
       // Show notification
-      showNotification('DISPLAY ORIENTATION ADJUSTED');
+      showNotification('Display orientation adjusted');
     }, 300);
   });
   
@@ -1650,13 +1650,13 @@
     if (gridContainer) {
       setTimeout(function() {
         gridContainer.classList.remove('scanning');
-        
+
         // Show initial notification
-        showNotification('BEAT MACHINE READY');
+        showNotification('Beat Machine ready');
       }, 1000);
     }
   }
-  
+
   // Initialize the application
   initialize();
 }());
